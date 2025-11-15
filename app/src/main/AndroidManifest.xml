@@ -3,11 +3,21 @@
           xmlns:tools="http://schemas.android.com/tools"
           package="com.example.mobilefoodfreshness">
 
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
 
     <application
         android:allowBackup="true"
         android:label="MobileFoodFreshness"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Material3.DayNight.NoActionBar"
         tools:replace="android:allowBackup,android:label,android:theme">
 
@@ -21,5 +31,22 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name=".ircamera.RosCameraActivity" android:exported="false"/>
+        <activity android:name=".ircamera.RobotPickerActivity" android:exported="false"/>
+        <activity android:name=".LocalCameraActivity" android:exported="false"/>
+        <activity
+            android:name=".ircamera.ResultActivity"
+            android:exported="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
     </application>
 </manifest>

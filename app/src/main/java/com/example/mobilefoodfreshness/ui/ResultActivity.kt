@@ -11,8 +11,8 @@ class ResultActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result)
         val text = intent.getStringExtra("summary") ?: "No summary"
-        val tv = findViewById<android.widget.TextView>(R.id.tvSummary)
-        val img = findViewById<android.widget.ImageView>(R.id.imgSnapshot)
+        val tv = findViewById<android.widget.TextView>(R.id.title)
+        val img = findViewById<android.widget.ImageView>(R.id.capturedImage)
         tv.text = text
         img.setImageBitmap(bitmapCache)
     }
