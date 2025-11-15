@@ -11,7 +11,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mobilefoodfreshness.R
 import org.json.JSONArray
 
-data class FoodItem(val name: String, val edible: Boolean)
+data class FoodItem(
+    val name: String?,
+    val edible: Boolean?
+)
+
 
 class ResultActivity : AppCompatActivity() {
 
@@ -41,16 +45,16 @@ class ResultActivity : AppCompatActivity() {
     private fun parseItems(raw: String): List<FoodItem> {
         val out = mutableListOf<FoodItem>()
         try {
-            val arr = JSONArray(raw.trim())
+            val arr = org.json.JSONArray(raw.trim())
             for (i in 0 until arr.length()) {
                 val o = arr.optJSONObject(i) ?: continue
-                val name = o.optString("name", "unknown")
-                val edible = o.optBoolean("edible", false)
+                val name = if (o.has("name")) o.optString("name", null) else null
+                val edible = if (o.has("edible")) o.optBoolean("edible") else null
                 out.add(FoodItem(name, edible))
             }
-        } catch (_: Exception) {
-            // if not an array, return empty
-        }
+        } catch (_: Exception) { }
         return out
     }
+
+
 }

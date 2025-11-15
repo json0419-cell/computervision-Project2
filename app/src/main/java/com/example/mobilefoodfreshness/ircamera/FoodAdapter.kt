@@ -1,9 +1,9 @@
 package com.example.mobilefoodfreshness.ircamera
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckedTextView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mobilefoodfreshness.R
@@ -11,9 +11,9 @@ import com.example.mobilefoodfreshness.R
 class FoodAdapter(private val data: List<FoodItem>) :
     RecyclerView.Adapter<FoodAdapter.VH>() {
 
-    class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val name: TextView = view.findViewById(R.id.itemName)
-        val edible: CheckedTextView = view.findViewById(R.id.itemEdible)
+    class VH(v: View) : RecyclerView.ViewHolder(v) {
+        val name: TextView = v.findViewById(R.id.itemName)
+        val edible: TextView = v.findViewById(R.id.itemEdible)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -24,9 +24,27 @@ class FoodAdapter(private val data: List<FoodItem>) :
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = data[position]
-        holder.name.text = item.name
-        holder.edible.isChecked = item.edible
-        holder.edible.text = if (item.edible) "Edible" else "Not edible"
+
+        // name
+        holder.name.text = item.name?.takeIf { it.isNotBlank() }.orEmpty()
+
+        // edible
+        when (item.edible) {
+            true -> {
+                holder.edible.visibility = View.VISIBLE
+                holder.edible.text = "✅"
+                holder.edible.setTextColor(Color.parseColor("#0B8043"))
+            }
+            false -> {
+                holder.edible.visibility = View.VISIBLE
+                holder.edible.text = "❌"
+                holder.edible.setTextColor(Color.parseColor("#B00020"))
+            }
+            else -> {
+                holder.edible.text = ""
+                holder.edible.visibility = View.INVISIBLE
+            }
+        }
     }
 
     override fun getItemCount(): Int = data.size
