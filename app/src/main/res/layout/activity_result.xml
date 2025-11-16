@@ -90,5 +90,11 @@
             android:overScrollMode="ifContentScrolls"
             android:background="@android:color/white"
             android:paddingTop="2dp"/>
+
+        <Button
+            android:id="@+id/back"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Back To Camera" />
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

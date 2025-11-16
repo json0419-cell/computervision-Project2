@@ -19,7 +19,6 @@ import com.example.mobilefoodfreshness.ui.OverlayView
 import com.example.mobilefoodfreshness.ml.YoloDetector
 import com.example.mobilefoodfreshness.ml.FreshnessClassifier
 import com.example.mobilefoodfreshness.tracking.BoxTracker
-import com.example.mobilefoodfreshness.util.toBitmap
 import java.util.concurrent.Executors
 
 class CameraFragment : Fragment() {

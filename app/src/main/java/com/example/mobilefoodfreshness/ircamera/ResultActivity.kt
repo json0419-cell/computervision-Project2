@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mobilefoodfreshness.R
-import org.json.JSONArray
 
 data class FoodItem(
     val name: String?,

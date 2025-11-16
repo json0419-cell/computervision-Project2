@@ -15,5 +15,9 @@ class ResultActivity : AppCompatActivity() {
         val img = findViewById<android.widget.ImageView>(R.id.capturedImage)
         tv.text = text
         img.setImageBitmap(bitmapCache)
+
+        findViewById<android.widget.Button>(R.id.back).setOnClickListener {
+            finish()
+        }
     }
 }
