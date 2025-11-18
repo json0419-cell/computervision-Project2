@@ -23,7 +23,7 @@ class OverlayView @JvmOverloads constructor(
 
     fun currentSummary(): String {
         if (boxes.isEmpty()) return "No items detected."
-        return boxes.joinToString("\\n") {
+        return boxes.joinToString("\n") {
             val status = when {
                 (it.fresh ?: 0f) >= 0.7f -> "fresh"
                 (it.fresh ?: 0f) >= 0.4f -> "slightly spoiled"
