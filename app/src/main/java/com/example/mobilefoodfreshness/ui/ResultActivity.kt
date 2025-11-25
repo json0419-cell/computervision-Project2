@@ -28,6 +28,7 @@ import okhttp3.Response
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 
+
 private val apiUrl = "https://vertex-proxy-646427707803.us-central1.run.app/infer"
 
 private val prompt =
@@ -39,14 +40,18 @@ class ResultActivity : AppCompatActivity() {
 
     private var bitmapCacheParameter: Bitmap? = null
 
-    companion object { var bitmapCache: Bitmap? = null }
+    companion object {
+        var bitmapCache: Bitmap? = null
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         bitmapCacheParameter = bitmapCache
         setContentView(R.layout.activity_result)
+
         val text = intent.getStringExtra("summary") ?: "No summary"
-        val tv = findViewById<android.widget.TextView>(R.id.title)
-        val img = findViewById<android.widget.ImageView>(R.id.capturedImage)
+        val tv = findViewById<TextView>(R.id.title)
+        val img = findViewById<ImageView>(R.id.capturedImage)
         tv.text = text
         img.setImageBitmap(bitmapCache)
 
@@ -65,7 +70,12 @@ class ResultActivity : AppCompatActivity() {
         title.text = "Detected items: ${items.size}"
 
         list.layoutManager = LinearLayoutManager(this)
-        list.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
+        list.addItemDecoration(
+            DividerItemDecoration(
+                this,
+                DividerItemDecoration.VERTICAL
+            )
+        )
         list.adapter = FoodAdapter(items)
 
         findViewById<Button>(R.id.back).setOnClickListener {
@@ -81,6 +91,7 @@ class ResultActivity : AppCompatActivity() {
         }
     }
 
+    // ✅ Use score: Float? here so we remain compatible with the old edible field
     private fun parseItems(raw: String): List<FoodItem> {
         val out = mutableListOf<FoodItem>()
         try {
@@ -88,10 +99,25 @@ class ResultActivity : AppCompatActivity() {
             for (i in 0 until arr.length()) {
                 val o = arr.optJSONObject(i) ?: continue
                 val name = if (o.has("name")) o.optString("name", null) else null
-                val edible = if (o.has("edible")) o.optBoolean("edible") else null
-                out.add(FoodItem(name, edible))
+
+                val score: Float? = when {
+                    // Newer endpoint may supply score directly—use it as-is
+                    o.has("score") && !o.isNull("score") ->
+                        o.optDouble("score").toFloat()
+
+                    // Older endpoint only has edible: Boolean → map to an approximate score
+                    o.has("edible") && !o.isNull("edible") -> {
+                        val edible = o.optBoolean("edible")
+                        if (edible) 9f else 2f   // Edible ≈9 points, not edible ≈2 points
+                    }
+
+                    else -> null
+                }
+
+                out.add(FoodItem(name, score))
             }
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
         return out
     }
 
@@ -131,8 +157,14 @@ class ResultActivity : AppCompatActivity() {
                         val items = parseItems(cleanJson)
                         title.text = "Detected items: ${items.size}"
 
-                        list.layoutManager = LinearLayoutManager(this@ResultActivity)
-                        list.addItemDecoration(DividerItemDecoration(this@ResultActivity, DividerItemDecoration.VERTICAL))
+                        list.layoutManager =
+                            LinearLayoutManager(this@ResultActivity)
+                        list.addItemDecoration(
+                            DividerItemDecoration(
+                                this@ResultActivity,
+                                DividerItemDecoration.VERTICAL
+                            )
+                        )
                         list.adapter = FoodAdapter(items)
                     }
                 }
@@ -173,9 +205,13 @@ class ResultActivity : AppCompatActivity() {
         for (i in start until text.length) {
             val c = text[i]
             if (inString) {
-                if (esc) { esc = false }
-                else if (c == '\\') { esc = true }
-                else if (c == '"') { inString = false }
+                if (esc) {
+                    esc = false
+                } else if (c == '\\') {
+                    esc = true
+                } else if (c == '"') {
+                    inString = false
+                }
                 continue
             } else {
                 when (c) {
@@ -188,7 +224,9 @@ class ResultActivity : AppCompatActivity() {
                             return try {
                                 org.json.JSONArray(candidate) // validate
                                 candidate
-                            } catch (_: Exception) { null }
+                            } catch (_: Exception) {
+                                null
+                            }
                         }
                     }
                 }

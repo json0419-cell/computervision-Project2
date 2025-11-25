@@ -19,6 +19,10 @@ import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.*
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -32,7 +36,6 @@ class RosCameraActivity : AppCompatActivity() {
     private lateinit var status: TextView
     private lateinit var btnShutter: FloatingActionButton
 
-    // Fullscreen loading overlay & central spinner
     private lateinit var loadingOverlay: FrameLayout
     private lateinit var centerLoading: CircularProgressIndicator
 
@@ -41,15 +44,12 @@ class RosCameraActivity : AppCompatActivity() {
     @Volatile
     private var latestFrame: Bitmap? = null
 
-    // When true, camera preview stops updating (frame is frozen)
     @Volatile
     private var isPreviewFrozen: Boolean = false
 
-    private val apiUrl = "https://vertex-proxy-646427707803.us-central1.run.app/infer"
-    private val prompt =
-        "Extract all food items visible in the image and return a JSON array of {name, edible}. Output JSON only."
+    // Python backend endpoint
+    private val apiUrl = "http://149.165.159.197:8080/infer"
 
-    // Store last uploaded JPEG so we can forward it to ResultActivity
     private var lastUploadedJpeg: ByteArray? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,7 +67,6 @@ class RosCameraActivity : AppCompatActivity() {
         val topic = intent.getStringExtra("camera_topic") ?: "/bot5/camera_node/image/compressed"
         val wsUrl = "ws://$ip:$port"
 
-        // Connect to ROS bridge and subscribe to a compressed image topic
         ros = RosBridgeClient(
             wsUrl = wsUrl,
             topic = topic,
@@ -88,7 +87,6 @@ class RosCameraActivity : AppCompatActivity() {
     private var lastTs = 0L
 
     private fun handleFrame(jpeg: ByteArray) {
-        // If preview is frozen (user pressed shutter), ignore incoming frames
         if (isPreviewFrozen) return
 
         val now = System.currentTimeMillis()
@@ -107,13 +105,9 @@ class RosCameraActivity : AppCompatActivity() {
             return
         }
 
-        // Freeze preview so the image "sticks" at shutter time
         isPreviewFrozen = true
-
-        // Disable shutter to avoid multiple uploads
         btnShutter.isEnabled = false
 
-        // Show fullscreen loading overlay with central spinner
         loadingOverlay.visibility = View.VISIBLE
         centerLoading.show()
 
@@ -124,11 +118,25 @@ class RosCameraActivity : AppCompatActivity() {
             }
             lastUploadedJpeg = jpegBytes
 
-            val req = ApiClient.buildRequest(apiUrl, jpegBytes, prompt)
+            val mediaType = "image/jpeg".toMediaType()
+            val imageBody = jpegBytes.toRequestBody(mediaType)
+
+            val body = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("image", "image.jpg", imageBody)
+                .addFormDataPart("draw_mask", "false")
+                .addFormDataPart("box_threshold", "0.4")
+                .addFormDataPart("text_threshold", "0.3")
+                .build()
+
+            val req = Request.Builder()
+                .url(apiUrl)
+                .post(body)
+                .build()
+
             ApiClient.http.newCall(req).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     ui.launch {
-                        // Hide overlay and restore UI state on failure
                         loadingOverlay.visibility = View.GONE
                         isPreviewFrozen = false
                         btnShutter.isEnabled = true
@@ -144,34 +152,26 @@ class RosCameraActivity : AppCompatActivity() {
                 override fun onResponse(call: Call, response: Response) {
                     val bodyStr = response.body?.string().orEmpty()
                     ui.launch {
-                        // Re-enable shutter; overlay will be hidden only on error
                         btnShutter.isEnabled = true
 
                         if (!response.isSuccessful) {
-                            // HTTP error → hide overlay and unfreeze preview
                             loadingOverlay.visibility = View.GONE
                             isPreviewFrozen = false
                             showResultDialog("HTTP ${response.code}", bodyStr.take(1000))
                             return@launch
                         }
 
-                        // Try to extract a clean JSON array from model output
-                        val cleanJson = coerceJsonArray(bodyStr)
-                        if (cleanJson == null) {
-                            // JSON parse failure → hide overlay and unfreeze preview
-                            loadingOverlay.visibility = View.GONE
-                            isPreviewFrozen = false
-                            showResultDialog("JSON parse failed", bodyStr.take(1000))
-                            return@launch
-                        }
+                        val jpeg = lastUploadedJpeg ?: ByteArray(0)
+                        val imageUri = saveJpegToCache(jpeg)
 
-                        // Success: go to result screen.
-                        // No need to hide overlay here because this Activity will go to background.
-                        val imageUri = saveJpegToCache(lastUploadedJpeg ?: ByteArray(0))
                         startActivity(
-                            Intent(this@RosCameraActivity, ResultActivity::class.java).apply {
+                            Intent(
+                                this@RosCameraActivity,
+                                IRCameraResultActivity::class.java    // ✅ New results screen
+                            ).apply {
                                 putExtra("image_uri", imageUri.toString())
-                                putExtra("result_json", cleanJson)
+                                putExtra("raw_json", bodyStr)      // Full JSON payload from backend
+                                putExtra("jpeg_bytes", jpeg)       // Original JPEG for refresh logic
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
                         )
@@ -195,82 +195,13 @@ class RosCameraActivity : AppCompatActivity() {
             .show()
     }
 
-    // --- JSON coercion: best-effort extraction of the first valid JSON array from raw text ---
-    private fun coerceJsonArray(raw: String): String? {
-        // Strip UTF-8 BOM & zero-width spaces
-        val s = raw.replace("\uFEFF", "").replace("\u200B", "").trim()
-
-        // 1) ```json ... ``` fenced code block
-        val fenceStart = s.indexOf("```")
-        if (fenceStart >= 0) {
-            val fenceEnd = s.indexOf("```", fenceStart + 3)
-            if (fenceEnd > fenceStart) {
-                val inside = s.substring(fenceStart + 3, fenceEnd).trim()
-                val cleaned = inside.removePrefix("json").removePrefix("JSON").trim()
-                val arr = extractBalancedArray(cleaned)
-                if (arr != null) return arr
-            }
-        }
-
-        // 2) Raw array or array with leading/trailing noise
-        extractBalancedArray(s)?.let { return it }
-
-        // 3) Give up
-        return null
-    }
-
-    // Scan for a balanced top-level JSON array and validate it
-    private fun extractBalancedArray(text: String): String? {
-        val start = text.indexOf('[')
-        if (start < 0) return null
-
-        var depth = 0
-        var inString = false
-        var esc = false
-
-        for (i in start until text.length) {
-            val c = text[i]
-
-            if (inString) {
-                if (esc) {
-                    esc = false
-                } else if (c == '\\') {
-                    esc = true
-                } else if (c == '"') {
-                    inString = false
-                }
-                continue
-            } else {
-                when (c) {
-                    '"' -> inString = true
-                    '[' -> depth++
-                    ']' -> {
-                        depth--
-                        if (depth == 0) {
-                            val candidate = text.substring(start, i + 1)
-                            return try {
-                                org.json.JSONArray(candidate) // validate
-                                candidate
-                            } catch (_: Exception) {
-                                null
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return null
-    }
-
     override fun onResume() {
         super.onResume()
-        // When coming back from ResultActivity, make sure UI is restored
         isPreviewFrozen = false
         loadingOverlay.visibility = View.GONE
         centerLoading.hide()
         btnShutter.isEnabled = true
     }
-
 
     override fun onDestroy() {
         super.onDestroy()

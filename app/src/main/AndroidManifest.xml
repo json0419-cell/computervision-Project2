@@ -35,7 +35,7 @@
         <activity android:name=".ircamera.RobotPickerActivity" android:exported="false"/>
         <activity android:name=".LocalCameraActivity" android:exported="false"/>
         <activity
-            android:name=".ircamera.ResultActivity"
+            android:name=".ircamera.IRCameraResultActivity"
             android:exported="false" />
 
         <provider

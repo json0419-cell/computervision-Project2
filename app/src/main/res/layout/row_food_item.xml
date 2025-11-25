@@ -1,41 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="8dp"
-    android:layout_marginEnd="8dp"
-    android:layout_marginTop="6dp"
-    app:cardCornerRadius="14dp"
-    app:cardElevation="2dp">
+    android:layout_height="48dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp">
 
+    <!-- Food name -->
+    <TextView
+        android:id="@+id/itemName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Tomato"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Score label -->
+    <TextView
+        android:id="@+id/itemScoreLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fresh"
+        android:textSize="12sp"
+        android:paddingEnd="8dp"
+        android:textColor="@android:color/black" />
+
+    <!-- 3-bar freshness indicator -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:id="@+id/freshnessBars"
+        android:layout_width="72dp"
+        android:layout_height="12dp"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+        android:gravity="center_vertical">
 
-        <!-- name -->
-        <TextView
-            android:id="@+id/itemName"
+        <View
+            android:id="@+id/bar1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="6dp"
             android:layout_weight="1"
-            android:textSize="16sp"
-            android:textColor="#222222"
-            android:maxLines="1"
-            android:ellipsize="end"/>
+            android:background="#555555"
+            android:layout_marginEnd="2dp" />
 
-        <!-- edible emoji -->
-        <TextView
-            android:id="@+id/itemEdible"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"/>
+        <View
+            android:id="@+id/bar2"
+            android:layout_width="0dp"
+            android:layout_height="6dp"
+            android:layout_weight="1"
+            android:background="#555555"
+            android:layout_marginEnd="2dp" />
+
+        <View
+            android:id="@+id/bar3"
+            android:layout_width="0dp"
+            android:layout_height="6dp"
+            android:layout_weight="1"
+            android:background="#555555" />
     </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>

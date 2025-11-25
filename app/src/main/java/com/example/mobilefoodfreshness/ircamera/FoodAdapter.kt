@@ -8,12 +8,20 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mobilefoodfreshness.R
 
+data class FoodItem(
+    val name: String?,
+    val score: Float?    // 0–10 freshness score from backend
+)
+
 class FoodAdapter(private val data: List<FoodItem>) :
     RecyclerView.Adapter<FoodAdapter.VH>() {
 
     class VH(v: View) : RecyclerView.ViewHolder(v) {
         val name: TextView = v.findViewById(R.id.itemName)
-        val edible: TextView = v.findViewById(R.id.itemEdible)
+        val scoreLabel: TextView = v.findViewById(R.id.itemScoreLabel)
+        val bar1: View = v.findViewById(R.id.bar1)
+        val bar2: View = v.findViewById(R.id.bar2)
+        val bar3: View = v.findViewById(R.id.bar3)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -25,25 +33,48 @@ class FoodAdapter(private val data: List<FoodItem>) :
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = data[position]
 
-        // name
-        holder.name.text = item.name?.takeIf { it.isNotBlank() }.orEmpty()
-        holder.name.visibility = View.VISIBLE
+        // ⭐ Replace "_" with spaces only for display purposes
+        val displayName = item.name
+            ?.replace("_", " ")
+            ?.takeIf { it.isNotBlank() }
+            .orEmpty()
+        holder.name.text = displayName
 
-        // edible
-        when (item.edible) {
-            true -> {
-                holder.edible.visibility = View.VISIBLE
-                holder.edible.text = "✅"
-                holder.name.setTextColor(Color.parseColor("#0B8043"))
+        // Reset all bars to the inactive gray state by default
+        val inactive = Color.parseColor("#555555")
+        holder.bar1.setBackgroundColor(inactive)
+        holder.bar2.setBackgroundColor(inactive)
+        holder.bar3.setBackgroundColor(inactive)
+
+        // Three color bands representing freshness levels
+        val red = Color.parseColor("#D32F2F")
+        val yellow = Color.parseColor("#FBC02D")
+        val green = Color.parseColor("#2E7D32")
+
+        val score = item.score
+        if (score == null || score.isNaN()) {
+            holder.scoreLabel.text = "Unknown"
+            return
+        }
+
+        when {
+            score <= 4f -> {
+                // spoiled / inedible
+                holder.scoreLabel.text = "Spoiled"
+                holder.bar1.setBackgroundColor(red)
             }
-            false -> {
-                holder.edible.visibility = View.VISIBLE
-                holder.edible.text = "❌"
-                holder.name.setTextColor(Color.parseColor("#B00020"))
+            score <= 7f -> {
+                // okay
+                holder.scoreLabel.text = "Okay"
+                holder.bar1.setBackgroundColor(yellow)
+                holder.bar2.setBackgroundColor(yellow)
             }
             else -> {
-                holder.edible.text = ""
-                holder.edible.visibility = View.INVISIBLE
+                // fresh (8–10)
+                holder.scoreLabel.text = "Fresh"
+                holder.bar1.setBackgroundColor(green)
+                holder.bar2.setBackgroundColor(green)
+                holder.bar3.setBackgroundColor(green)
             }
         }
     }
