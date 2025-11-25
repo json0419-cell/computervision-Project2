@@ -50,17 +50,10 @@
             android:layout_width="match_parent"
             android:layout_height="96dp"
             android:layout_gravity="bottom"
+            android:orientation="vertical"
             android:gravity="center"
             android:padding="16dp"
             android:background="#66000000">
-
-            <com.google.android.material.progressindicator.CircularProgressIndicator
-                android:id="@+id/uploadProgress"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:visibility="gone"
-                app:indicatorInset="0dp"
-                app:indicatorSize="36dp" />
         </LinearLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -74,6 +67,26 @@
             app:tint="@android:color/white"
             app:backgroundTint="@android:color/white"
             app:srcCompat="@android:drawable/ic_menu_camera" />
+
+        <!-- Fullscreen loading overlay with central spinner -->
+        <FrameLayout
+            android:id="@+id/loadingOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#66000000"
+            android:visibility="gone">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/centerLoading"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:indeterminate="true"
+                app:indicatorSize="56dp"
+                app:trackThickness="8dp"
+                android:layout_gravity="center" />
+
+        </FrameLayout>
+
     </FrameLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
