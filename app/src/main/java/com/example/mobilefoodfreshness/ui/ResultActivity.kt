@@ -1,8 +1,10 @@
 package com.example.mobilefoodfreshness.ui
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.example.mobilefoodfreshness.MainActivity
 import com.example.mobilefoodfreshness.R
 
 class ResultActivity : AppCompatActivity() {
@@ -17,7 +19,7 @@ class ResultActivity : AppCompatActivity() {
         img.setImageBitmap(bitmapCache)
 
         findViewById<android.widget.Button>(R.id.back).setOnClickListener {
-            finish()
+            startActivity(Intent(this, MainActivity::class.java))
         }
     }
 }
