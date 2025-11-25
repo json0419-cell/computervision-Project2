@@ -96,5 +96,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Back To Camera" />
+
+        <Button
+            android:id="@+id/refreshresults"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Refresh Results" />
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -27,18 +27,19 @@ class FoodAdapter(private val data: List<FoodItem>) :
 
         // name
         holder.name.text = item.name?.takeIf { it.isNotBlank() }.orEmpty()
+        holder.name.visibility = View.VISIBLE
 
         // edible
         when (item.edible) {
             true -> {
                 holder.edible.visibility = View.VISIBLE
                 holder.edible.text = "✅"
-                holder.edible.setTextColor(Color.parseColor("#0B8043"))
+                holder.name.setTextColor(Color.parseColor("#0B8043"))
             }
             false -> {
                 holder.edible.visibility = View.VISIBLE
                 holder.edible.text = "❌"
-                holder.edible.setTextColor(Color.parseColor("#B00020"))
+                holder.name.setTextColor(Color.parseColor("#B00020"))
             }
             else -> {
                 holder.edible.text = ""
