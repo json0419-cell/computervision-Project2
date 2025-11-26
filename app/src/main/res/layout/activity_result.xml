@@ -27,19 +27,19 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardUseCompatPadding="true"
+            android:foreground="?attr/selectableItemBackground"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
-            android:foreground="?attr/selectableItemBackground">
+            app:cardUseCompatPadding="true">
 
             <!-- ❗Use the custom BoundingBoxImageView here ❗ -->
             <com.example.mobilefoodfreshness.ircamera.BoundingBoxImageView
                 android:id="@+id/capturedImage"
                 android:layout_width="match_parent"
                 android:layout_height="220dp"
-                android:scaleType="fitCenter"
                 android:adjustViewBounds="true"
-                android:contentDescription="captured image"/>
+                android:contentDescription="captured image"
+                android:scaleType="fitCenter" />
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Title + count -->

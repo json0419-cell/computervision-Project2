@@ -55,6 +55,7 @@ class IRCameraResultActivity : AppCompatActivity() {
         setContentView(R.layout.activity_result)
 
         image = findViewById(R.id.capturedImage)
+        // image.rotation = 90f
         title = findViewById(R.id.title)
         list = findViewById(R.id.resultList)
         btnRefresh = findViewById(R.id.refreshresults)

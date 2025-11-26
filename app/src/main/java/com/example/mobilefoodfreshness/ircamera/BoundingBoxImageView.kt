@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
+import kotlin.math.max
 import kotlin.math.min
 
 data class BoundingBox(
@@ -106,22 +107,35 @@ class BoundingBoxImageView @JvmOverloads constructor(
 
             // Text: class name (replace underscores) + confidence
             val labelName = cls.replace("_", " ")
-            val scoreStr = box.score?.let {
-                " %.2f".format(it)
-            }.orEmpty()
+            val scoreStr = box.score?.let { " %.2f".format(it) }.orEmpty()
             val text = "$labelName$scoreStr"
 
-            // Measure text bounds for the background rect
+            // Measure text bounds
             val textBounds = Rect()
             textPaint.getTextBounds(text, 0, text.length, textBounds)
+
             val padding = 6f
-            val textLeft = scaledRect.left
-            val textTop = scaledRect.top - textBounds.height() - padding * 2
+            val textWidth = textPaint.measureText(text)
+            val textHeight = textBounds.height().toFloat()
 
-            val bgTop = if (textTop < 0) 0f else textTop
-            val bgRect = RectF(textLeft, bgTop, textLeft + textBounds.width() + padding * 2, bgTop + textBounds.height() + padding * 2)
+            // ===== Place label ON TOP of the box, at the LEFT edge =====
+            // Background rect anchored to box's top-left, just above it.
+            val bgLeft = scaledRect.left
+            val bgBottom = scaledRect.top - padding              // just above box
+            val bgTop = bgBottom - textHeight - padding * 2      // room for text + padding
 
-            // Draw the background pill plus the text
+            // Prevent the label from going off-screen at the top
+            val clampedBgTop = max(0f, bgTop)
+            val verticalShift = clampedBgTop - bgTop
+
+            val bgRect = RectF(
+                bgLeft,
+                clampedBgTop,
+                bgLeft + textWidth + padding * 2,
+                clampedBgTop + textHeight + padding * 2
+            )
+
+            // Draw label background + text
             canvas.drawRoundRect(bgRect, 8f, 8f, textBgPaint)
             canvas.drawText(
                 text,

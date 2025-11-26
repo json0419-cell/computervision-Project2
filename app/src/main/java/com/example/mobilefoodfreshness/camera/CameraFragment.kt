@@ -55,6 +55,8 @@ class CameraFragment : Fragment() {
     // Static image overlay displayed after tapping Finish (freezes the frame)
     private lateinit var freezeImage: ImageView
 
+    private lateinit var blackOverlayView: View
+
     // Loading overlay for the local camera preview
     private lateinit var localLoadingOverlay: FrameLayout
     private lateinit var localCenterLoading: CircularProgressIndicator
@@ -90,6 +92,8 @@ class CameraFragment : Fragment() {
         overlay = v.findViewById(R.id.overlay)
         btnFinish = v.findViewById(R.id.btnFinish)
         freezeImage = v.findViewById(R.id.freezeImage)
+        blackOverlayView = v.findViewById(R.id.blackOverlayView)
+        blackOverlayView.visibility = View.GONE
 
         localLoadingOverlay = v.findViewById(R.id.localLoadingOverlay)
         localCenterLoading = v.findViewById(R.id.localCenterLoading)
@@ -113,6 +117,7 @@ class CameraFragment : Fragment() {
         localLoadingOverlay.visibility = View.GONE
         localCenterLoading.hide()
         btnFinish.isEnabled = true
+        blackOverlayView.visibility = View.GONE
 
         reqPermission.launch(Manifest.permission.CAMERA)
     }
@@ -267,7 +272,9 @@ class CameraFragment : Fragment() {
 
         // Freeze preview by drawing the current frame into freezeImage over the preview
         freezeImage.setImageBitmap(frame)
+        freezeImage.rotation = 90f
         freezeImage.visibility = View.VISIBLE
+        blackOverlayView.visibility = View.VISIBLE
 
         // Show loading overlay and disable the button
         btnFinish.isEnabled = false
