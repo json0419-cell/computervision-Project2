@@ -11,6 +11,7 @@ data class BoundingBox(
     val rect: RectF,          // Original image coordinates (x1, y1, x2, y2)
     val className: String,    // Food name
     val score: Float?,        // Confidence score (0~1)
+    val freshnessScore: String,        // freshness score (0~10)
     val rawLabel: String      // Raw label from backend (debug helper)
 )
 
@@ -143,6 +144,46 @@ class BoundingBoxImageView @JvmOverloads constructor(
                 bgRect.bottom - padding,
                 textPaint
             )
+
+            // ===== Bottom label: freshness score =====
+            box.freshnessScore.let { freshnessText ->
+                // Format text, e.g. "Freshness 8.5"
+
+                // Measure text bounds
+                val freshnessBounds = Rect()
+                textPaint.getTextBounds(freshnessText, 0, freshnessText.length, freshnessBounds)
+
+                val freshnessTextWidth = textPaint.measureText(freshnessText)
+                val freshnessTextHeight = freshnessBounds.height().toFloat()
+
+                val bottomPadding = 6f
+
+                // Place label BELOW the box, at the LEFT edge
+                var bottomBgLeft = scaledRect.left
+                var bottomBgTop = scaledRect.bottom + bottomPadding
+                var bottomBgBottom = bottomBgTop + freshnessTextHeight + bottomPadding * 2
+
+                // Prevent the label from going off-screen at the bottom
+                val shiftUp = max(0f, bottomBgBottom - viewH)
+                bottomBgTop -= shiftUp
+                bottomBgBottom -= shiftUp
+
+                val bottomBgRect = RectF(
+                    bottomBgLeft,
+                    bottomBgTop,
+                    bottomBgLeft + freshnessTextWidth + bottomPadding * 2,
+                    bottomBgBottom
+                )
+
+                // Draw label background + text (BOTTOM LABEL)
+                canvas.drawRoundRect(bottomBgRect, 8f, 8f, textBgPaint)
+                canvas.drawText(
+                    freshnessText,
+                    bottomBgRect.left + bottomPadding,
+                    bottomBgRect.bottom - bottomPadding,
+                    textPaint
+                )
+            }
         }
     }
 }

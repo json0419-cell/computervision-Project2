@@ -61,7 +61,6 @@ class IRCameraResultActivity : AppCompatActivity() {
         setContentView(R.layout.activity_result)
 
         image = findViewById(R.id.capturedImage)
-        // image.rotation = 90f
         title = findViewById(R.id.title)
         list = findViewById(R.id.resultList)
         btnRefresh = findViewById(R.id.refreshresults)
@@ -203,6 +202,7 @@ class IRCameraResultActivity : AppCompatActivity() {
             val boxesArr = obj.optJSONArray("boxes_xyxy") ?: return out
             val labelsArr = obj.optJSONArray("labels") ?: JSONArray()
             val statusArr = obj.optJSONArray("per_item_status") ?: JSONArray()
+            val itemsArr = obj.optJSONArray("items") ?: JSONArray()
 
             // Collect placeholder names from per_item_status
             val placeholderNames = mutableSetOf<String>()
@@ -259,11 +259,15 @@ class IRCameraResultActivity : AppCompatActivity() {
                 val (classNameRaw, scoreForDraw) = splitLabelAndScore(label)
                 val className = classNameRaw.replace('_', ' ')  // ⭐ Replace _ with spaces for display
 
+                val s = itemsArr.optJSONObject(i) ?: continue
+                val freshnessScore = "freshness ${s.optString("edible", "-1")}"
+
                 out.add(
                     BoundingBox(
                         rect = rect,
                         className = className,
                         score = scoreForDraw,
+                        freshnessScore = freshnessScore,
                         rawLabel = label
                     )
                 )
