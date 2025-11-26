@@ -1,6 +1,8 @@
 package com.example.mobilefoodfreshness.ircamera
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Bundle
@@ -50,6 +52,10 @@ class IRCameraResultActivity : AppCompatActivity() {
     private var imageUri: Uri? = null
     private var originalJpeg: ByteArray? = null
 
+    private var origImageWidth: Int = 0
+    private var origImageHeight: Int = 0
+    private var imageRotated90: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result)
@@ -70,13 +76,35 @@ class IRCameraResultActivity : AppCompatActivity() {
         // Prefer showing the original image via Uri
         val uriStr = intent.getStringExtra("image_uri")
         if (uriStr != null) {
-            imageUri = Uri.parse(uriStr)
-            image.setImageURI(imageUri)
+            val uri = Uri.parse(uriStr)
+            imageUri = uri // (also fixes resend() using imageUri)
+
+            val inputStream = contentResolver.openInputStream(uri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream?.close()
+
+            // store original (unrotated) size
+            origImageWidth = bitmap.width
+            origImageHeight = bitmap.height
+
+            val matrix = Matrix()
+            matrix.postRotate(90f) // or any desired angle
+            val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            bitmap.recycle() // Release the original bitmap
+
+            image.setImageBitmap(rotatedBitmap)
+            imageRotated90 = true
         } else {
             // Fallback when Uri is unavailable: decode from jpeg_bytes
             originalJpeg?.let { bytes ->
                 val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+
+                // store original size (no rotation in this path)
+                origImageWidth = bmp.width
+                origImageHeight = bmp.height
+
                 image.setImageBitmap(bmp)
+                imageRotated90 = false
             }
         }
 
@@ -148,6 +176,24 @@ class IRCameraResultActivity : AppCompatActivity() {
         return out
     }
 
+    private fun buildRotationMatrixForBoxes(): Matrix? {
+        if (!imageRotated90 || origImageWidth == 0 || origImageHeight == 0) {
+            return null
+        }
+
+        val m = Matrix()
+        // Same as in onCreate: postRotate(90f)
+        m.postRotate(90f)
+
+        // Mimic what Bitmap.createBitmap does: translate so the image fits at (0,0)
+        val src = RectF(0f, 0f, origImageWidth.toFloat(), origImageHeight.toFloat())
+        val dst = RectF()
+        m.mapRect(dst, src)
+        m.postTranslate(-dst.left, -dst.top)
+
+        return m
+    }
+
     // ----------------- Parse boxes_xyxy, apply Python placeholder filtering, include className + score -----------------
     private fun parseBoundingBoxes(raw: String): List<BoundingBox> {
         val out = mutableListOf<BoundingBox>()
@@ -167,6 +213,9 @@ class IRCameraResultActivity : AppCompatActivity() {
                     if (!nm.isNullOrBlank()) placeholderNames.add(nm)
                 }
             }
+
+            // Build rotation matrix (if the displayed image is rotated 90°)
+            val rotationMatrix = buildRotationMatrixForBoxes()
 
             for (i in 0 until boxesArr.length()) {
                 val boxArr = boxesArr.optJSONArray(i) ?: continue
@@ -200,13 +249,19 @@ class IRCameraResultActivity : AppCompatActivity() {
                 val x2 = boxArr.optDouble(2).toFloat()
                 val y2 = boxArr.optDouble(3).toFloat()
 
+                // Rectangle in original image coordinates
+                val rect = RectF(x1, y1, x2, y2)
+
+                // ⭐ Rotate rect to match the rotated bitmap, if needed
+                rotationMatrix?.mapRect(rect)
+
                 // Split into className + score for drawing
                 val (classNameRaw, scoreForDraw) = splitLabelAndScore(label)
                 val className = classNameRaw.replace('_', ' ')  // ⭐ Replace _ with spaces for display
 
                 out.add(
                     BoundingBox(
-                        rect = RectF(x1, y1, x2, y2),
+                        rect = rect,
                         className = className,
                         score = scoreForDraw,
                         rawLabel = label
