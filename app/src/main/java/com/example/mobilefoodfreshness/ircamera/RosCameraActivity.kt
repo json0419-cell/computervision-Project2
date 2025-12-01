@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -24,6 +25,7 @@ import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.opencv.android.OpenCVLoader
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -51,10 +53,21 @@ class RosCameraActivity : AppCompatActivity() {
     private val apiUrl = "http://149.165.159.197:8080/infer"
 
     private var lastUploadedJpeg: ByteArray? = null
+    
+    // Fisheye correction toggle
+    private var enableFisheyeCorrection = true  // Set to false to disable
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_ros_camera)
+        
+        // Initialize OpenCV for fisheye correction
+        if (!OpenCVLoader.initDebug()) {
+            Log.e("RosCamera", "OpenCV initialization failed")
+            enableFisheyeCorrection = false
+        } else {
+            Log.i("RosCamera", "OpenCV initialized successfully")
+        }
 
         preview = findViewById(R.id.preview)
         status = findViewById(R.id.status)
@@ -93,10 +106,23 @@ class RosCameraActivity : AppCompatActivity() {
         if (now - lastTs < 40) return
         lastTs = now
 
-        val bmp = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.size) ?: return
-        latestFrame = bmp
-
-        ui.launch { preview.setImageBitmap(bmp) }
+        ui.launch(Dispatchers.IO) {
+            var bmp = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.size) ?: return@launch
+            
+            // Apply fisheye correction if enabled
+            if (enableFisheyeCorrection) {
+                try {
+                    bmp = FisheyeCorrection.quickUndistort(bmp)
+                } catch (e: Exception) {
+                    Log.e("RosCamera", "Fisheye correction failed: ${e.message}")
+                }
+            }
+            
+            latestFrame = bmp
+            withContext(Dispatchers.Main) {
+                preview.setImageBitmap(bmp)
+            }
+        }
     }
 
     private fun onCaptureAndSend() {
@@ -112,8 +138,19 @@ class RosCameraActivity : AppCompatActivity() {
         centerLoading.show()
 
         ui.launch(Dispatchers.IO) {
+            // Apply fisheye correction if enabled (for the captured image)
+            var processedBmp = bmp
+            if (enableFisheyeCorrection) {
+                try {
+                    processedBmp = FisheyeCorrection.quickUndistort(bmp)
+                } catch (e: Exception) {
+                    Log.e("RosCamera", "Fisheye correction failed: ${e.message}")
+                    processedBmp = bmp  // Fallback to original
+                }
+            }
+            
             val jpegBytes = ByteArrayOutputStream().use { bos ->
-                bmp.compress(Bitmap.CompressFormat.JPEG, 90, bos)
+                processedBmp.compress(Bitmap.CompressFormat.JPEG, 90, bos)
                 bos.toByteArray()
             }
             lastUploadedJpeg = jpegBytes

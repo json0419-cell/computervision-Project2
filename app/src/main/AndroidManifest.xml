@@ -21,7 +21,6 @@
         android:theme="@style/Theme.Material3.DayNight.NoActionBar"
         tools:replace="android:allowBackup,android:label,android:theme">
 
-        <activity android:name=".ui.ResultActivity" />
 
         <activity
             android:name=".MainActivity"
@@ -31,9 +30,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name=".LocalCameraActivity" android:exported="false"/>
         <activity android:name=".ircamera.RosCameraActivity" android:exported="false"/>
         <activity android:name=".ircamera.RobotPickerActivity" android:exported="false"/>
-        <activity android:name=".LocalCameraActivity" android:exported="false"/>
+        <activity android:name=".util.LocalCameraResultActivity" android:exported="false"/>
         <activity
             android:name=".ircamera.IRCameraResultActivity"
             android:exported="false" />

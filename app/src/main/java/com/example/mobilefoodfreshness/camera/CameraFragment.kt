@@ -27,7 +27,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.mobilefoodfreshness.R
 import com.example.mobilefoodfreshness.ui.OverlayView
 import com.example.mobilefoodfreshness.ircamera.ApiClient
-import com.example.mobilefoodfreshness.ircamera.IRCameraResultActivity
+import com.example.mobilefoodfreshness.util.LocalCameraResultActivity
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -351,7 +351,7 @@ class CameraFragment : Fragment() {
                             val safeJson = buildSlimJson(bodyStr)
                             val imageUri = saveJpegToCache(jpegBytes)
 
-                            val intent = Intent(requireContext(), IRCameraResultActivity::class.java)
+                            val intent = Intent(requireContext(), LocalCameraResultActivity::class.java)
                             intent.putExtra("raw_json", safeJson)
                             intent.putExtra("image_uri", imageUri.toString())
                             intent.putExtra("needs_rotation",true)
