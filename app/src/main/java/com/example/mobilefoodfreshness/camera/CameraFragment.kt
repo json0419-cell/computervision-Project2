@@ -22,6 +22,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.example.mobilefoodfreshness.R
 import com.example.mobilefoodfreshness.ui.OverlayView
@@ -89,9 +90,11 @@ class CameraFragment : Fragment() {
     ): View {
         val v = inflater.inflate(R.layout.fragment_camera, container, false)
         previewView = v.findViewById(R.id.previewView)
+        previewView.scaleType = PreviewView.ScaleType.FIT_CENTER
         overlay = v.findViewById(R.id.overlay)
         btnFinish = v.findViewById(R.id.btnFinish)
         freezeImage = v.findViewById(R.id.freezeImage)
+        freezeImage.scaleType = ImageView.ScaleType.FIT_CENTER
         blackOverlayView = v.findViewById(R.id.blackOverlayView)
         blackOverlayView.visibility = View.GONE
 
