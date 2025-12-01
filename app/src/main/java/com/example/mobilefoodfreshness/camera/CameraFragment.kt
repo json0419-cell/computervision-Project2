@@ -351,6 +351,7 @@ class CameraFragment : Fragment() {
                             val intent = Intent(requireContext(), IRCameraResultActivity::class.java)
                             intent.putExtra("raw_json", safeJson)
                             intent.putExtra("image_uri", imageUri.toString())
+                            intent.putExtra("needs_rotation",true)
                             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
                             startActivity(intent)

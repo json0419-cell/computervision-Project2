@@ -17,6 +17,11 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mobilefoodfreshness.R
+import com.example.mobilefoodfreshness.ircamera.ApiClient
+import com.example.mobilefoodfreshness.ircamera.BoundingBox
+import com.example.mobilefoodfreshness.ircamera.BoundingBoxImageView
+import com.example.mobilefoodfreshness.ircamera.FoodAdapter
+import com.example.mobilefoodfreshness.ircamera.FoodItem
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.*
 import okhttp3.Call
@@ -71,6 +76,7 @@ class IRCameraResultActivity : AppCompatActivity() {
 
         val rawJson = intent.getStringExtra("raw_json").orEmpty()
         originalJpeg = intent.getByteArrayExtra("jpeg_bytes")
+        val needsRotation = intent.getBooleanExtra("needs_rotation", false)
 
         // Prefer showing the original image via Uri
         val uriStr = intent.getStringExtra("image_uri")
@@ -86,13 +92,19 @@ class IRCameraResultActivity : AppCompatActivity() {
             origImageWidth = bitmap.width
             origImageHeight = bitmap.height
 
-            val matrix = Matrix()
-            matrix.postRotate(90f) // or any desired angle
-            val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-            bitmap.recycle() // Release the original bitmap
-
-            image.setImageBitmap(rotatedBitmap)
-            imageRotated90 = true
+            if (needsRotation) {
+                // Only rotate if the flag indicates it's needed (local camera)
+                val matrix = Matrix()
+                matrix.postRotate(90f)
+                val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                bitmap.recycle()
+                image.setImageBitmap(rotatedBitmap)
+                imageRotated90 = true
+            } else {
+                // IR camera: no rotation needed
+                image.setImageBitmap(bitmap)
+                imageRotated90 = false
+            }
         } else {
             // Fallback when Uri is unavailable: decode from jpeg_bytes
             originalJpeg?.let { bytes ->
@@ -253,7 +265,7 @@ class IRCameraResultActivity : AppCompatActivity() {
                 val rect = RectF(x1, y1, x2, y2)
 
                 // ⭐ Rotate rect to match the rotated bitmap, if needed
-                rotationMatrix?.mapRect(rect)
+                //rotationMatrix?.mapRect(rect)
 
                 // Split into className + score for drawing
                 val (classNameRaw, scoreForDraw) = splitLabelAndScore(label)

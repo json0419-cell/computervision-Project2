@@ -172,6 +172,7 @@ class RosCameraActivity : AppCompatActivity() {
                                 putExtra("image_uri", imageUri.toString())
                                 putExtra("raw_json", bodyStr)      // Full JSON payload from backend
                                 putExtra("jpeg_bytes", jpeg)       // Original JPEG for refresh logic
+                                putExtra("needs_rotation", false)
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
                         )
