@@ -264,8 +264,13 @@ class LocalCameraResultActivity : AppCompatActivity() {
                 val (classNameRaw, scoreForDraw) = splitLabelAndScore(label)
                 val className = classNameRaw.replace('_', ' ')  // ⭐ Replace _ with spaces for display
 
-                val s = itemsArr.optJSONObject(i) ?: continue
-                val freshnessScore = "freshness ${s.optString("edible", "-1")}"
+                var freshnessScore = "-1"
+                for (j in 0 until boxesArr.length()) {
+                    val s = itemsArr.optJSONObject(j) ?: continue
+                    if (s.optString("name", "-1").equals(classNameRaw)) {
+                        freshnessScore = "freshness ${s.optString("edible", "-1")}"
+                    }
+                }
 
                 out.add(
                     BoundingBox(

@@ -112,7 +112,7 @@ class RosCameraActivity : AppCompatActivity() {
             // Apply fisheye correction if enabled
             if (enableFisheyeCorrection) {
                 try {
-                    bmp = FisheyeCorrection.quickUndistort(bmp)
+                    //bmp = FisheyeCorrection.quickUndistort(bmp)
                 } catch (e: Exception) {
                     Log.e("RosCamera", "Fisheye correction failed: ${e.message}")
                 }
@@ -142,7 +142,7 @@ class RosCameraActivity : AppCompatActivity() {
             var processedBmp = bmp
             if (enableFisheyeCorrection) {
                 try {
-                    processedBmp = FisheyeCorrection.quickUndistort(bmp)
+                    //processedBmp = FisheyeCorrection.quickUndistort(bmp)
                 } catch (e: Exception) {
                     Log.e("RosCamera", "Fisheye correction failed: ${e.message}")
                     processedBmp = bmp  // Fallback to original
